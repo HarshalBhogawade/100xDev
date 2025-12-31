@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Todo App with JWT Auth</title>
+</head>
+
+<!-- 
+============ APPLICATION FLOW ============
+1. User signup: POST /signup → Creates account
+2. User signin: POST /signin → Gets JWT token → Stores in localStorage
+3. Token sent in headers for protected routes: {headers: {token: '...'}}
+4. Backend auth middleware verifies token → Extracts username → req.username
+5. Todo operations filtered by username (each user sees only their todos)
+
+============ KEY CONCEPTS ============
+- JWT Token: Stateless authentication (server doesn't store sessions)
+- localStorage: Browser storage for persisting token across page reloads
+- CORS: Allows frontend (HTML file) to make requests to backend (localhost:3000)
+- Middleware: auth() runs before protected routes to verify user identity
+-->
+
+<body>
+
+    <!-- signup section  -->
+    <div id="signup-section">
+        <h3>Signup</h3>
+        <input id="signup-username" placeholder="username">
+        <input id="signup-password" type="password" placeholder="password">
+        <button onclick="signup()">Signup</button>
+    </div>
+
+    <!-- Todo section -->
+    <div id="todo-section">
+        <h3>My Todos</h3>
+        <input id="todo-input" placeholder="Enter task">
+        <button onclick="addTodo()">Add Todo</button>
+
+        <div id="todo-list"></div>
+    </div>
+    <!-- sig in  -->
+    <div id="signin-section">
+        <h3>Signin</h3>
+        <input id="signin-username" placeholder="username">
+        <input id="signin-password" type="password" placeholder="password">
+        <button onclick="signin()">Signin</button>
+    </div>
+
+    <!-- after signin this displays -->
+    <div id="user-section">
+        <h3>User Info</h3>
+        <button onclick="getUserInformation()">Get Info</button>
+        <div id="information"></div>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.7/axios.min.js"></script>
+    <script>
+
+        // ============ UI STATE MANAGEMENT ============
+        // Controls which sections are visible based on authentication status
+        function updateui() {
+            const token = localStorage.getItem('token');  // Check if user is logged in
+            
+            if (token) {
+                // User logged in: Hide auth forms, show app content
+                document.getElementById('signup-section').style.display = 'none';
+                document.getElementById('signin-section').style.display = 'none';
+                document.getElementById('user-section').style.display = 'block';
+                document.getElementById('todo-section').style.display = 'block';
+                getTodos();  // Fetch user's todos from backend
+            } else {
+                // User logged out: Show auth forms, hide app content
+                document.getElementById('signup-section').style.display = 'block';
+                document.getElementById('signin-section').style.display = 'block';
+                document.getElementById('user-section').style.display = 'none';
+                document.getElementById('todo-section').style.display = 'none';
+            }
+        }
+        // ============ AUTHENTICATION FUNCTIONS ============
+        
+        // SIGNUP: Create new user account
+        async function signup() {
+            await axios.post('http://localhost:3000/signup', {
+                username: document.getElementById('signup-username').value,
+                password: document.getElementById('signup-password').value
+            });
+            alert('Signed up');
+            updateui();
+        }
+
+        // SIGNIN: Authenticate & receive JWT token
+        async function signin() {
+            const res = await axios.post('http://localhost:3000/signin', {
+                username: document.getElementById('signin-username').value,
+                password: document.getElementById('signin-password').value
+            });
+            // Store token in browser's localStorage (persists across page reloads)
+            localStorage.setItem('token', res.data.token);
+            alert('Signed in');
+            updateui();
+        }
+
+
+        // GET USER INFO: Fetch logged-in user's details (protected route)
+        async function getUserInformation() {
+            const token = localStorage.getItem('token');
+            if (!token) return alert('Not logged in');
+
+            // Send token in headers for authentication
+            const res = await axios.get('http://localhost:3000/me', {
+                headers: { token }  // Backend auth middleware verifies this token
+            });
+
+            document.getElementById('information').innerText = "username : " + res.data.username + ",,, password" + res.data.password;
+        }
+
+        // LOGOUT: Clear token from localStorage
+        function logout() {
+            localStorage.removeItem('token');  // Remove token = user logged out
+            document.getElementById('information').innerText = '';
+            alert('Logged out');
+            updateui();
+        }
+        updateui();  // Run on page load to set initial UI state
+
+        // ============ TODO MANAGEMENT FUNCTIONS ============
+        
+        // CREATE TODO: Add new task
+        async function addTodo() {
+            const token = localStorage.getItem('token');
+            const task = document.getElementById('todo-input').value;
+
+            if (!task) return alert('Enter a task');
+
+            // POST request with token in headers (auth middleware will verify)
+            await axios.post('http://localhost:3000/todos',
+                { task },
+                { headers: { token } }  // Token sent for authentication
+            );
+
+            document.getElementById('todo-input').value = '';  // Clear input
+            getTodos();  // Refresh todo list
+        }
+
+        // READ TODOS: Fetch all todos for logged-in user
+        async function getTodos() {
+            const token = localStorage.getItem('token');
+
+            // Backend filters todos by username (from token)
+            const res = await axios.get('http://localhost:3000/todos', {
+                headers: { token }
+            });
+
+            // Render todos dynamically
+            const todoList = document.getElementById('todo-list');
+            todoList.innerHTML = '';
+
+            res.data.forEach(todo => {
+                todoList.innerHTML += `
+            <div>
+                <input type="checkbox" ${todo.completed ? 'checked' : ''} 
+                    onchange="toggleTodo(${todo.id}, this.checked)">
+                <span style="${todo.completed ? 'text-decoration: line-through' : ''}">${todo.task}</span>
+                <button onclick="deleteTodo(${todo.id})">Delete</button>
+            </div>
+        `;
+            });
+        }
+
+        // UPDATE TODO: Toggle completion status or edit task
+        async function toggleTodo(id, completed) {
+            const token = localStorage.getItem('token');
+
+            // PUT request to update todo
+            await axios.put(`http://localhost:3000/todos/${id}`,
+                { completed },  // Send only the field to update
+                { headers: { token } }
+            );
+        }
+
+        // DELETE TODO: Remove task
+        async function deleteTodo(id) {
+            const token = localStorage.getItem('token');
+
+            await axios.delete(`http://localhost:3000/todos/${id}`, {
+                headers: { token }
+            });
+
+            getTodos();  // Refresh list after deletion
+        }
+    </script>
+</body>
+
+</html>

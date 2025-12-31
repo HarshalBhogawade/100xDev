@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <input type="text" placeholder="ENTER UR TASK">
+    <button onclick="addtask()">Add task</button>
+    <div id="todos"></div> <!--This is where the tosdos are stored-->
+    <script>
+        
+        let todos = []; //array or obj having an keytitle inside each task is stored
+        function addtask(){
+            todos.push({
+                title: document.querySelector("input").value, //gets value from input box and insert into the todos arr
+            })
+            render(); //calls render function which renders the todo list on the document 
+
+        }
+
+        //deletes task from the todos which taske index
+        function deletetask(index){
+            todos.splice(index,1); 
+            render();
+        }
+
+        function render(){
+            document.querySelector("#todos").innerHTML = "";
+            for(let i =0;i<todos.length;i++){
+                const task = todos[i];
+                const divel = document.createElement("div");
+                const spanel = document.createElement("span");
+                const btnel  = document.createElement("button");
+                spanel.innerHTML = task.title;
+                btnel.innerHTML = "deletetask";
+                btnel.onclick = () => deletetask(i);
+                divel.appendChild(spanel);
+                divel.appendChild(btnel);
+                document.querySelector("#todos").appendChild(divel);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <nav>
+        <ul class="navbar">
+            <li><button onclick="red()" style="color: red;">Red</button></li>
+            <li><button onclick="brown()" style="color: brown;">Brown</button></li>
+            <li><button onclick="pink()" style="color: pink;">Pink</button></li>
+            <li><button onclick="blue()" style="color: blue;">Blue</button></li>
+            <li><button onclick="violet()" style="color: violet;">Violet</button></li>
+        </ul>
+    </nav>
+    <script>
+        const bg = document.querySelector("body");
+        function red(){
+            bg.style.backgroundColor = "red";
+        }
+
+        function brown(){
+            bg.style.backgroundColor = "brown";
+        }
+
+        function pink(){
+            bg.style.backgroundColor  = "pink";
+        }
+        function blue(){
+            bg.style.backgroundColor = "blue";
+        }
+
+        function violet(){
+            bg.style.backgroundColor = "violet";
+        }
+    </script>
+</body>
+
+</html>

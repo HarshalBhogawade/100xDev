@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Auth</title>
+</head>
+<!-- <--! **Flow of the FE and BE is signup function puts the username and password in body
+ of /signup route and then /signup route adds it to the users array ?
+Yes, exactly correct! ✅
+
+Here's the flow:
+
+Frontend (index.html) - signup() function:
+
+Gets username and password from input fields
+Sends POST request to http://localhost:3000/signup
+Puts username and password in the request body as JSON
+
+Backend (auth.js) - /signup route:
+Receives the request
+Extracts username and password from req.body
+Checks if user already exists in users array
+If not, creates a user object {username, password}
+Pushes it to the users array-->
+<body>
+
+    <!-- signup section  -->
+    <div id="signup-section">
+        <h3>Signup</h3>
+        <input id="signup-username" placeholder="username">
+        <input id="signup-password" type="password" placeholder="password">
+        <button onclick="signup()">Signup</button>
+    </div>
+    
+    <!-- sig in  -->
+    <div id="signin-section">
+        <h3>Signin</h3>
+        <input id="signin-username" placeholder="username">
+        <input id="signin-password" type="password" placeholder="password">
+        <button onclick="signin()">Signin</button>
+    </div>
+
+    <!-- after signin this displays -->
+    <div id="user-section">
+        <h3>User Info</h3>
+        <button onclick="getUserInformation()">Get Info</button>
+        <div id="information"></div>
+        <button onclick="logout()">Logout</button>
+    </div>
+    
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.7/axios.min.js"></script>
+    <script>
+
+        //function for displaying hiding the signup and signin sections and only dsplay user information section
+        function updateui() {
+            const token = localStorage.getItem('token'); //gets token from localstorage of browsee
+            if (token) {
+                //user is logged in
+                document.getElementById('signup-section').style.display = 'none'; // signup hideen
+                document.getElementById('signin-section').style.display = 'none';//signin hiden
+                document.getElementById('user-section').style.display = 'block'; //not hidden
+            } else {
+                document.getElementById('signup-section').style.display = 'block'; //not hidden
+                document.getElementById('signin-section').style.display = 'block';
+                document.getElementById('user-section').style.display = 'none'; //hidden
+            }
+        }
+        async function signup() {  //gets the signup route from backend
+            await axios.post('http://localhost:3000/signup', {
+                username: document.getElementById('signup-username').value,
+                password: document.getElementById('signup-password').value
+            });
+            alert('Signed up');
+            updateui();
+        }
+
+        async function signin() { //sign in and generates jwt token using JWT_KEY
+            const res = await axios.post('http://localhost:3000/signin', {
+                username: document.getElementById('signin-username').value,
+                password: document.getElementById('signin-password').value
+            });
+            localStorage.setItem('token', res.data.token);
+            alert('Signed in');
+            updateui();
+        }
+
+
+        async function getUserInformation() { //gets user password + username from /me route only if token exists
+            const token = localStorage.getItem('token');
+            if (!token) return alert('Not logged in');
+
+            const res = await axios.get('http://localhost:3000/me', {
+                headers: { token }
+            });
+
+            document.getElementById('information').innerText = "username : " + res.data.username + ",,, password" + res.data.password;
+        }
+
+        function logout() { //removes token from local db of browser
+            localStorage.removeItem('token');
+            document.getElementById('information').innerText = '';
+            alert('Logged out');
+            updateui();
+        }
+        updateui();
+    </script>
+</body>
+
+</html>

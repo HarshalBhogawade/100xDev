@@ -1,0 +1,18 @@
+
+
+nav{
+    display: flex;
+    justify-content: center;
+}
+.navbar{
+    display: flex;
+    column-gap: 20px;
+    padding: 5px;
+    list-style-type: none;
+    background-color: aqua;
+}
+
+.one{
+    color: red;
+}
+
